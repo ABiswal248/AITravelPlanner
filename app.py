@@ -1,40 +1,40 @@
 import streamlit as st
-
 from agents.travel_agent import run_travel_agent
 
 st.set_page_config(
-    page_title="AI Travel Planner"
+    page_title="AI Travel Planner",
+    layout="centered"
 )
 
-st.title("AI Travel Planner Chatbot")
+st.title("AI Travel Planner")
 
-st.write(
-    "Ask me to plan your travel."
+st.markdown(
+    "Helping travelers plan smarter trips with AI"
 )
 
-# Chat history
+with st.expander("Suggested Prompts", expanded=True):
+    st.markdown("""
+- Plan a trip from Hyderabad to Goa
+- Weekend trip under ₹10,000
+- Best places to visit in Goa
+- Family vacation itinerary
+- Honeymoon trip planner
+- Budget trip to Manali
+""")
 
 if "messages" not in st.session_state:
-
     st.session_state.messages = []
-
-# Display previous messages
 
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
-
         st.markdown(message["content"])
-
-# User input
 
 prompt = st.chat_input(
     "Enter your travel request..."
 )
 
 if prompt:
-
-    # Store user message
 
     st.session_state.messages.append(
         {
@@ -43,21 +43,19 @@ if prompt:
         }
     )
 
-    # Show user message
-
     with st.chat_message("user"):
-
         st.markdown(prompt)
-
-    # AI response
 
     with st.chat_message("assistant"):
 
-        response = run_travel_agent(prompt)
+        with st.spinner("Planning your trip..."):
+
+            response = run_travel_agent(
+                prompt,
+                st.session_state.messages
+            )
 
         st.markdown(response)
-
-    # Store AI response
 
     st.session_state.messages.append(
         {

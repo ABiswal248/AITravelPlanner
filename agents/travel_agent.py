@@ -2,63 +2,90 @@ from dotenv import load_dotenv
 import os
 from groq import Groq
 
-from tools.flight_tool import search_flights
-from tools.hotel_tool import recommend_hotels
-from tools.places_tool import discover_places
-
-# Load environment variables
 load_dotenv()
 
-# Get API key
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-# Initialize Groq client
 client = Groq(
-    api_key=GROQ_API_KEY
+    api_key=os.getenv("GROQ_API_KEY")
 )
 
-# Main AI Travel Planner Function
-def run_travel_agent(user_prompt):
+def run_travel_agent(user_prompt, chat_history):
 
     try:
-        # Get travel data
-        flights = search_flights("Hyderabad", "Goa")
 
-        hotels = recommend_hotels("Goa")
+        system_prompt = """
+You are AI Travel Planner.
 
-        places = discover_places("Goa")
+Your ONLY purpose is helping users with travel planning.
 
-        # Create prompt
-        final_prompt = f"""
-        You are an intelligent AI Travel Planner.
+You can assist with:
 
-        User Request:
-        {user_prompt}
+- Flights
+- Hotels
+- Tourist Attractions
+- Travel Itineraries
+- Travel Budgets
+- Travel Recommendations
+- Transportation
+- Travel Safety
+- Travel Documentation
 
-        Available Flights:
-        {flights}
+IMPORTANT RULES:
 
-        Recommended Hotels:
-        {hotels}
+1. Never act as a general-purpose chatbot.
 
-        Tourist Places:
-        {places}
+2. If a user asks about politics, history, current affairs,
+sports, programming, funny facts, science, education,
+health, finance, or entertainment topics,
+politely redirect them back to travel planning.
 
-        Create a detailed travel itinerary.
-        """
+3. Do not become a general chatbot.
 
-        # Generate AI response
+4. If the user mentions a destination,
+collect:
+
+- Source City
+- Destination City
+- Travel Date
+- Number of Travelers
+- Budget
+- Hotel Preference
+- Transportation Preference
+
+5. Do not generate an itinerary until sufficient information is collected.
+
+6. Stay focused on travel planning.
+
+7. Do not use emojis.
+
+8. Maintain a professional tone.
+"""
+
+        messages = [
+            {
+                "role": "system",
+                "content": system_prompt
+            }
+        ]
+
+        for message in chat_history:
+
+            if message["role"] in ["user", "assistant"]:
+
+                messages.append(
+                    {
+                        "role": message["role"],
+                        "content": message["content"]
+                    }
+                )
+
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {
-                    "role": "user",
-                    "content": final_prompt
-                }
-            ]
+        model="llama-3.1-8b-instant",
+        messages=messages,
+        temperature=0.2
         )
 
         return response.choices[0].message.content
 
     except Exception as e:
+
         return f"Error: {str(e)}"
